@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import "./App.css";
-import TaglineSection from "./TaglineSection";
 
 const api = axios.create({
   baseURL: "http://localhost:8000",
@@ -85,19 +84,19 @@ function App() {
   // Derived list with filter and sorting
   const filteredProducts = useMemo(() => {
     let filtered = products;
-    
+
     // Apply filter
     const q = filter.trim().toLowerCase();
     if (q) {
       filtered = products.filter((p) =>
-        String(p.id).includes(q) ||
+        String(p.id).toLowerCase().includes(q) ||
         p.name?.toLowerCase().includes(q) ||
         p.description?.toLowerCase().includes(q)
       );
     }
-    
-    // Apply sorting
-    return filtered.sort((a, b) => {
+
+    // Apply sorting (use a copy to avoid mutating original array)
+    return [...filtered].sort((a, b) => {
       let aVal = a[sortField];
       let bVal = b[sortField];
       
@@ -198,8 +197,7 @@ function App() {
     <div className="app-bg">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-badge">📦</span>
-          <h1>Telusko Trac</h1>
+          <h1>Inventory Manager</h1>
         </div>
         <div className="top-actions">
           <button className="btn btn-light" onClick={fetchProducts} disabled={loading}>
@@ -210,21 +208,27 @@ function App() {
 
       <div className="container">
         <div className="stats">
-          <div className="chip">Total: {products.length}</div>
-          <div className="search">
-            <input
-              type="text"
-              placeholder="Search by id, name or description..."
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            />
+          <div className="stats-left">
+            <div className="chip">Total: {products.length}</div>
+            <div className="search" >
+              <input
+                type="text"
+                aria-label="Search products"
+                placeholder="Search by id, name or description..."
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+              />
+            </div>
           </div>
+          <div className="stats-right" />
         </div>
 
         <div className="content-grid">
           <div className="card form-card">
-            <h2>{editId ? "Edit Product" : "Add Product"}</h2>
-            <form onSubmit={handleSubmit} className="product-form">
+            <div className="form-card-header">
+              <h2>{editId ? "Edit Product" : "Add Product"}</h2>
+            </div>
+              <form onSubmit={handleSubmit} className="product-form">
               <input
                 type="number"
                 name="id"
@@ -290,7 +294,7 @@ function App() {
             {error && <div className="error-msg">{error}</div>}
           </div>
           
-          <TaglineSection />
+          
 
           <div className="card list-card">
             <h2>Products</h2>
