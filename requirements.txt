@@ -1,5 +1,6 @@
 fastapi
 uvicorn[standard]
 pydantic
-anyio
-watchfiles
+sqlalchemy
+psycopg
+python-dotenv
