@@ -19,6 +19,8 @@ pipeline {
                 ]) {
                     sh '''
                         echo "DATABASE_URL=$DATABASE_URL" > .env
+                        docker stop fastapi-backend || true
+                        docker rm fastapi-backend || true
                         docker compose down || true
                         docker compose up -d --build
                     '''
