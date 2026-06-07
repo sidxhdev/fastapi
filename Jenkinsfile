@@ -12,39 +12,28 @@ pipeline {
                     url: 'https://github.com/sidxhdev/fastapi'
             }
         }
-        stage('Build Backend') {
+        stage('Run Backend') {
             steps {
-                sh 'docker build -t fastapi-backend -f backend/Dockerfile .'
+                withCredentials([
+                    string(credentialsId: 'DATABASE_URL', variable: 'DATABASE_URL')
+                ]) {
+                    sh '''
+                        echo "DATABASE_URL=$DATABASE_URL" > .env
+                        docker compose down || true
+                        docker compose up -d --build
+                    '''
+                }
             }
         }
-        stage('Run Backend') {
-    steps {
-        withCredentials([
-            string(credentialsId: 'DATABASE_URL', variable: 'DATABASE_URL')
-        ]) {
-            sh '''
-                docker stop fastapi-backend || true
-                docker rm fastapi-backend || true
-                docker run -d \
-                    --name fastapi-backend \
-                    --network host \
-                    -e DATABASE_URL=$DATABASE_URL \
-                    -e REDIS_HOST=localhost \
-                    -e REDIS_PORT=6379 \
-                    -e ENVIRONMENT=production \
-                    fastapi-backend
-            '''
-        }
-    }
-}
         stage('Build Frontend') {
             steps {
-                sh '''
-                    cd frontend
-                    echo "REACT_APP_API_URL=http://$EC2_IP:8000" > .env.production
-                    npm install
-                    npm run build
-                '''
+                dir('frontend') {
+                    sh '''
+                        echo "REACT_APP_API_URL=http://$EC2_IP:8000" > .env.production
+                        npm install
+                        npm run build
+                    '''
+                }
             }
         }
         stage('Deploy Frontend to S3') {

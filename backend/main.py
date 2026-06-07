@@ -25,10 +25,8 @@ app.add_middleware(
     
 allow_origins=[
     "http://localhost:3000",
-    "http://localhost:8000",
     "http://fastapi-inventory-frontend.s3-website.ap-south-1.amazonaws.com",
-    "http://43.205.124.153:8000",
-    "http://43.205.124.153:3000",
+    
 ],
     allow_credentials=True,
     allow_methods=["*"],
