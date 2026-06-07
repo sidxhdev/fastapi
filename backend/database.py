@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 # Get database URL from environment variable
 DATABASE_URL = os.getenv(
 	"DATABASE_URL",
-	"postgresql+psycopg://postgres:postgres@localhost:5432/inventory_db",
+	"postgresql+psycopg2://postgres:postgres@localhost:5432/inventory_db",
 )
 
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
