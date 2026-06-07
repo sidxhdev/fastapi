@@ -28,11 +28,13 @@ pipeline {
                     string(credentialsId: 'DATABASE_URL', variable: 'DATABASE_URL')
                 ]) {
                     sh '''
-                        docker compose down || true
-                        DATABASE_URL=$DATABASE_URL \
-                        REDIS_HOST=redis \
-                        REDIS_PORT=6379 \
-                        docker compose up -d
+                        echo "DATABASE_URL=$DATABASE_URL" > .env
+                        echo "REDIS_HOST=redis" >> .env
+                        echo "REDIS_PORT=6379" >> .env
+                        echo "ENVIRONMENT=production" >> .env
+
+                        docker-compose down || true
+                        docker-compose up -d
                     '''
                 }
             }
