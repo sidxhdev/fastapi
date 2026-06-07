@@ -55,7 +55,7 @@ pipeline {
     }
     post {
         success {
-            echo "Live at: http://$S3_BUCKET.s3-website.$AWS_REGION.amazonaws.com"
+            echo "Live at: https://inventory-manager.sidxh.com"
         }
         failure {
             echo 'Pipeline failed'
