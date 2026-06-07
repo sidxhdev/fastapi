@@ -8,13 +8,7 @@ const api = axios.create({
 
 function App() {
   const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({
-    id: "",
-    name: "",
-    description: "",
-    price: "",
-    quantity: "",
-  });
+  const [form, setForm] = useState({ id: "", name: "", description: "", price: "", quantity: "" });
   const [editId, setEditId] = useState(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -24,17 +18,11 @@ function App() {
   const [sortDirection, setSortDirection] = useState("asc");
 
   useEffect(() => {
-    if (message) {
-      const timer = setTimeout(() => setMessage(""), 5000);
-      return () => clearTimeout(timer);
-    }
+    if (message) { const t = setTimeout(() => setMessage(""), 4000); return () => clearTimeout(t); }
   }, [message]);
 
   useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setError(""), 5000);
-      return () => clearTimeout(timer);
-    }
+    if (error) { const t = setTimeout(() => setError(""), 4000); return () => clearTimeout(t); }
   }, [error]);
 
   const fetchProducts = async () => {
@@ -43,54 +31,46 @@ function App() {
       const res = await api.get("/products/");
       setProducts(res.data);
       setError("");
-    } catch (err) {
-      setError("Failed to fetch products");
+    } catch {
+      setError("Failed to fetch products.");
     }
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  useEffect(() => { fetchProducts(); }, []);
+
+  const stats = useMemo(() => {
+    const total = products.length;
+    const units = products.reduce((s, p) => s + p.quantity, 0);
+    const value = products.reduce((s, p) => s + p.price * p.quantity, 0);
+    const avg = units ? value / units : 0;
+    return { total, units, value, avg };
+  }, [products]);
 
   const handleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
+    if (sortField === field) setSortDirection(d => d === "asc" ? "desc" : "asc");
+    else { setSortField(field); setSortDirection("asc"); }
   };
 
   const filteredProducts = useMemo(() => {
-    let filtered = products;
     const q = filter.trim().toLowerCase();
-    if (q) {
-      filtered = products.filter((p) =>
-        String(p.id).toLowerCase().includes(q) ||
-        p.name?.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q)
-      );
-    }
-    return [...filtered].sort((a, b) => {
-      let aVal = a[sortField];
-      let bVal = b[sortField];
-      if (sortField === "id" || sortField === "price" || sortField === "quantity") {
-        aVal = Number(aVal);
-        bVal = Number(bVal);
-      } else {
-        aVal = String(aVal).toLowerCase();
-        bVal = String(bVal).toLowerCase();
-      }
-      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
-      return 0;
+    let list = q
+      ? products.filter(p =>
+          String(p.id).includes(q) ||
+          p.name?.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q)
+        )
+      : [...products];
+    return list.sort((a, b) => {
+      let av = a[sortField], bv = b[sortField];
+      if (typeof av === "number") return sortDirection === "asc" ? av - bv : bv - av;
+      return sortDirection === "asc"
+        ? String(av).localeCompare(String(bv))
+        : String(bv).localeCompare(String(av));
     });
   }, [products, filter, sortField, sortDirection]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const resetForm = () => {
     setForm({ id: "", name: "", description: "", price: "", quantity: "" });
@@ -100,232 +80,167 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
-    setError("");
+    setMessage(""); setError("");
     try {
+      const payload = { ...form, id: Number(form.id), price: Number(form.price), quantity: Number(form.quantity) };
       if (editId) {
-        await api.put(`/products/${editId}`, {
-          ...form,
-          id: Number(form.id),
-          price: Number(form.price),
-          quantity: Number(form.quantity),
-        });
-        setMessage("Product updated successfully");
+        await api.put(`/products/${editId}`, payload);
+        setMessage("Product updated successfully.");
       } else {
-        await api.post("/products/", {
-          ...form,
-          id: Number(form.id),
-          price: Number(form.price),
-          quantity: Number(form.quantity),
-        });
-        setMessage("Product created successfully");
+        await api.post("/products/", payload);
+        setMessage("Product added successfully.");
       }
       resetForm();
       fetchProducts();
     } catch (err) {
-      setError(err.response?.data?.detail || "Operation failed");
+      setError(err.response?.data?.detail || "Operation failed.");
     }
     setLoading(false);
   };
 
-  const handleEdit = (product) => {
-    setForm({
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      quantity: product.quantity,
-    });
-    setEditId(product.id);
-    setMessage("");
-    setError("");
+  const handleEdit = (p) => {
+    setForm({ id: p.id, name: p.name, description: p.description, price: p.price, quantity: p.quantity });
+    setEditId(p.id);
+    setMessage(""); setError("");
   };
 
   const handleDelete = async (id) => {
-    const ok = window.confirm("Delete this product?");
-    if (!ok) return;
+    if (!window.confirm("Delete this product?")) return;
     setLoading(true);
-    setMessage("");
-    setError("");
     try {
       await api.delete(`/products/${id}`);
-      setMessage("Product deleted successfully");
+      setMessage("Product deleted.");
       fetchProducts();
-    } catch (err) {
-      setError("Delete failed");
+    } catch {
+      setError("Delete failed.");
     }
     setLoading(false);
   };
 
-  const currency = (n) =>
-    typeof n === "number" ? n.toFixed(2) : Number(n || 0).toFixed(2);
+  const SortIcon = ({ field }) => {
+    if (sortField !== field) return <span className="sort-icon">↕</span>;
+    return <span className="sort-icon active">{sortDirection === "asc" ? "↑" : "↓"}</span>;
+  };
 
   return (
-    <div className="app-bg">
-      <header className="topbar">
-        <div className="brand">
-          <h1>Inventory Manager</h1>
+    <div className="app">
+      <header className="header">
+        <div className="header-brand">
+          <span className="header-icon">▤</span>
+          <span className="header-title">Inventory Manager</span>
         </div>
-        <div className="top-actions">
-          <button className="btn btn-light" onClick={fetchProducts} disabled={loading}>
-            Refresh
-          </button>
-        </div>
+        <button className="btn btn-outline" onClick={fetchProducts} disabled={loading}>
+          ↻ Refresh
+        </button>
       </header>
 
-      <div className="container">
-        <div className="stats">
-          <div className="stats-left">
-            <div className="chip">Total: {products.length}</div>
-            <div className="search">
-              <input
-                type="text"
-                aria-label="Search products"
-                placeholder="Search by id, name or description..."
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-              />
-            </div>
+      <main className="main">
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-label">Total products</div>
+            <div className="stat-value">{stats.total}</div>
           </div>
-          <div className="stats-right" />
+          <div className="stat-card">
+            <div className="stat-label">Total value</div>
+            <div className="stat-value">${Math.round(stats.value).toLocaleString()}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Total units</div>
+            <div className="stat-value">{stats.units}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Avg price/unit</div>
+            <div className="stat-value">${Math.round(stats.avg)}</div>
+          </div>
         </div>
 
         <div className="content-grid">
           <div className="card form-card">
-            <div className="form-card-header">
-              <h2>{editId ? "Edit Product" : "Add Product"}</h2>
-            </div>
-            <form onSubmit={handleSubmit} className="product-form">
-              <input
-                type="number"
-                name="id"
-                placeholder="ID"
-                value={form.id}
-                onChange={handleChange}
-                required
-                disabled={!!editId}
-              />
-              <input
-                type="text"
-                name="name"
-                placeholder="Name"
-                value={form.name}
-                onChange={handleChange}
-                required
-              />
-              <input
-                type="text"
-                name="description"
-                placeholder="Description"
-                value={form.description}
-                onChange={handleChange}
-                required
-              />
-              <input
-                type="number"
-                name="price"
-                placeholder="Price"
-                value={form.price}
-                onChange={handleChange}
-                required
-                step="0.01"
-              />
-              <input
-                type="number"
-                name="quantity"
-                placeholder="Quantity"
-                value={form.quantity}
-                onChange={handleChange}
-                required
-              />
+            <div className="card-title">{editId ? "Edit product" : "Add product"}</div>
+            <form onSubmit={handleSubmit} className="form">
+              <div className="field">
+                <label>ID</label>
+                <input type="number" name="id" placeholder="e.g. 7" value={form.id} onChange={handleChange} required disabled={!!editId} />
+              </div>
+              <div className="field">
+                <label>Name</label>
+                <input type="text" name="name" placeholder="Product name" value={form.name} onChange={handleChange} required />
+              </div>
+              <div className="field">
+                <label>Description</label>
+                <input type="text" name="description" placeholder="Short description" value={form.description} onChange={handleChange} required />
+              </div>
+              <div className="field">
+                <label>Price ($)</label>
+                <input type="number" name="price" placeholder="0.00" step="0.01" value={form.price} onChange={handleChange} required />
+              </div>
+              <div className="field">
+                <label>Quantity</label>
+                <input type="number" name="quantity" placeholder="0" value={form.quantity} onChange={handleChange} required />
+              </div>
               <div className="form-actions">
-                <button className="btn" type="submit" disabled={loading}>
+                <button className="btn btn-primary" type="submit" disabled={loading}>
                   {editId ? "Update" : "Add"}
                 </button>
                 {editId && (
-                  <button
-                    className="btn btn-secondary"
-                    type="button"
-                    onClick={() => {
-                      resetForm();
-                      setMessage("");
-                      setError("");
-                    }}
-                  >
+                  <button className="btn btn-outline" type="button" onClick={() => { resetForm(); setMessage(""); setError(""); }}>
                     Cancel
                   </button>
                 )}
               </div>
+              {message && <div className="msg msg-success">{message}</div>}
+              {error && <div className="msg msg-error">{error}</div>}
             </form>
-            {message && <div className="success-msg">{message}</div>}
-            {error && <div className="error-msg">{error}</div>}
           </div>
 
-          <div className="card list-card">
-            <h2>Products</h2>
+          <div className="card table-card">
+            <div className="toolbar">
+              <div className="search-box">
+                <span className="search-icon">⌕</span>
+                <input
+                  type="text"
+                  placeholder="Search by id, name or description..."
+                  value={filter}
+                  onChange={e => setFilter(e.target.value)}
+                />
+              </div>
+              <span className="count-badge">{filteredProducts.length} items</span>
+            </div>
+
             {loading ? (
               <div className="loader">Loading...</div>
             ) : (
-              <div className="scroll-x">
-                <table className="product-table">
+              <div className="table-wrap">
+                <table>
                   <thead>
                     <tr>
-                      <th
-                        className={`sortable ${sortField === "id" ? `sort-${sortDirection}` : ""}`}
-                        onClick={() => handleSort("id")}
-                      >
-                        ID
-                      </th>
-                      <th
-                        className={`sortable ${sortField === "name" ? `sort-${sortDirection}` : ""}`}
-                        onClick={() => handleSort("name")}
-                      >
-                        Name
-                      </th>
+                      <th onClick={() => handleSort("id")}>ID <SortIcon field="id" /></th>
+                      <th onClick={() => handleSort("name")}>Name <SortIcon field="name" /></th>
                       <th>Description</th>
-                      <th
-                        className={`sortable ${sortField === "price" ? `sort-${sortDirection}` : ""}`}
-                        onClick={() => handleSort("price")}
-                      >
-                        Price
-                      </th>
-                      <th
-                        className={`sortable ${sortField === "quantity" ? `sort-${sortDirection}` : ""}`}
-                        onClick={() => handleSort("quantity")}
-                      >
-                        Quantity
-                      </th>
+                      <th onClick={() => handleSort("price")}>Price <SortIcon field="price" /></th>
+                      <th onClick={() => handleSort("quantity")}>Qty <SortIcon field="quantity" /></th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredProducts.map((p) => (
-                      <tr key={p.id}>
-                        <td>{p.id}</td>
-                        <td className="name-cell">{p.name}</td>
-                        <td className="desc-cell" title={p.description}>{p.description}</td>
-                        <td className="price-cell">${currency(p.price)}</td>
-                        <td>
-                          <span className="qty-badge">{p.quantity}</span>
-                        </td>
-                        <td>
-                          <div className="row-actions">
-                            <button className="btn btn-edit" onClick={() => handleEdit(p)}>
-                              Edit
-                            </button>
-                            <button className="btn btn-delete" onClick={() => handleDelete(p.id)}>
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredProducts.length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="empty">
-                          No products found.
-                        </td>
-                      </tr>
+                    {filteredProducts.length === 0 ? (
+                      <tr><td colSpan={6} className="empty">No products found.</td></tr>
+                    ) : (
+                      filteredProducts.map(p => (
+                        <tr key={p.id}>
+                          <td className="td-id">#{p.id}</td>
+                          <td className="td-name">{p.name}</td>
+                          <td className="td-desc" title={p.description}>{p.description}</td>
+                          <td className="td-price">${Number(p.price).toFixed(2)}</td>
+                          <td><span className="qty-badge">{p.quantity}</span></td>
+                          <td>
+                            <div className="row-actions">
+                              <button className="btn-action btn-edit" onClick={() => handleEdit(p)}>Edit</button>
+                              <button className="btn-action btn-delete" onClick={() => handleDelete(p.id)}>Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
                     )}
                   </tbody>
                 </table>
@@ -333,7 +248,7 @@ function App() {
             )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
