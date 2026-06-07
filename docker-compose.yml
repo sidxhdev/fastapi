@@ -1,4 +1,5 @@
-name:fastapi
+name: fastapi
+
 services:
   redis:
     image: redis
