@@ -2,6 +2,8 @@
 # Inventory Manager
 
 A full-stack inventory management system built with FastAPI, React, and PostgreSQL, deployed on AWS with a Jenkins CI/CD pipeline.
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/17a3333f-26bc-4481-be7d-ef47ac81f3f1" />
+
 
 ## Live Demo
 
