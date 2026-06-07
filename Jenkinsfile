@@ -1,45 +1,42 @@
 pipeline {
     agent any
-
     environment {
         AWS_REGION = 'ap-south-1'
         S3_BUCKET  = 'fastapi-inventory-frontend'
         EC2_IP     = '43.205.124.153'
     }
-
     stages {
-
         stage('Checkout') {
             steps {
                 git branch: 'master',
                     url: 'https://github.com/sidxhdev/fastapi'
             }
         }
-
         stage('Build Backend') {
             steps {
                 sh 'docker build -t fastapi-backend -f backend/Dockerfile .'
             }
         }
-
         stage('Run Backend') {
             steps {
                 withCredentials([
                     string(credentialsId: 'DATABASE_URL', variable: 'DATABASE_URL')
                 ]) {
                     sh '''
-                        echo "DATABASE_URL=$DATABASE_URL" > .env
-                        echo "REDIS_HOST=redis" >> .env
-                        echo "REDIS_PORT=6379" >> .env
-                        echo "ENVIRONMENT=production" >> .env
-
-                        docker-compose down || true
-                        docker-compose up -d
+                        docker stop fastapi-backend || true
+                        docker rm fastapi-backend || true
+                        docker run -d \
+                            --name fastapi-backend \
+                            -e DATABASE_URL=$DATABASE_URL \
+                            -e REDIS_HOST=redis \
+                            -e REDIS_PORT=6379 \
+                            -e ENVIRONMENT=production \
+                            -p 8000:8000 \
+                            fastapi-backend
                     '''
                 }
             }
         }
-
         stage('Build Frontend') {
             steps {
                 sh '''
@@ -50,7 +47,6 @@ pipeline {
                 '''
             }
         }
-
         stage('Deploy Frontend to S3') {
             steps {
                 withCredentials([
@@ -59,14 +55,13 @@ pipeline {
                 ]) {
                     sh '''
                         aws s3 sync frontend/build/ s3://$S3_BUCKET/ \
-                          --region $AWS_REGION \
-                          --delete
+                            --region $AWS_REGION \
+                            --delete
                     '''
                 }
             }
         }
     }
-
     post {
         success {
             echo "Live at: http://$S3_BUCKET.s3-website.$AWS_REGION.amazonaws.com"
