@@ -10,10 +10,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Get database URL from environment variable
-DATABASE_URL = os.getenv(
-	"DATABASE_URL",
-	"postgresql+psycopg2://postgres:postgres@localhost:5432/inventory_db",
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable not set")
 
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 
