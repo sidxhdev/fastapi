@@ -23,26 +23,20 @@ function App() {
   const [sortField, setSortField] = useState("id");
   const [sortDirection, setSortDirection] = useState("asc");
 
-  // Auto-dismiss messages after 5 seconds
   useEffect(() => {
     if (message) {
-      const timer = setTimeout(() => {
-        setMessage("");
-      }, 5000);
+      const timer = setTimeout(() => setMessage(""), 5000);
       return () => clearTimeout(timer);
     }
   }, [message]);
 
   useEffect(() => {
     if (error) {
-      const timer = setTimeout(() => {
-        setError("");
-      }, 5000);
+      const timer = setTimeout(() => setError(""), 5000);
       return () => clearTimeout(timer);
     }
   }, [error]);
 
-  // Fetch all products
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -56,22 +50,9 @@ function App() {
   };
 
   useEffect(() => {
-    // Inline initial fetch to avoid referencing external deps
-    const run = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get("/products/");
-        setProducts(res.data);
-        setError("");
-      } catch (err) {
-        setError("Failed to fetch products");
-      }
-      setLoading(false);
-    };
-    run();
+    fetchProducts();
   }, []);
 
-  // Handle sorting
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -81,11 +62,8 @@ function App() {
     }
   };
 
-  // Derived list with filter and sorting
   const filteredProducts = useMemo(() => {
     let filtered = products;
-
-    // Apply filter
     const q = filter.trim().toLowerCase();
     if (q) {
       filtered = products.filter((p) =>
@@ -94,40 +72,31 @@ function App() {
         p.description?.toLowerCase().includes(q)
       );
     }
-
-    // Apply sorting (use a copy to avoid mutating original array)
     return [...filtered].sort((a, b) => {
       let aVal = a[sortField];
       let bVal = b[sortField];
-      
-      // Handle numeric fields
       if (sortField === "id" || sortField === "price" || sortField === "quantity") {
         aVal = Number(aVal);
         bVal = Number(bVal);
       } else {
-        // Handle string fields
         aVal = String(aVal).toLowerCase();
         bVal = String(bVal).toLowerCase();
       }
-      
       if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
       if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
       return 0;
     });
   }, [products, filter, sortField, sortDirection]);
 
-  // Handle form input
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Reset form
   const resetForm = () => {
     setForm({ id: "", name: "", description: "", price: "", quantity: "" });
     setEditId(null);
   };
 
-  // Create or update product
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -159,7 +128,6 @@ function App() {
     setLoading(false);
   };
 
-  // Edit product
   const handleEdit = (product) => {
     setForm({
       id: product.id,
@@ -173,7 +141,6 @@ function App() {
     setError("");
   };
 
-  // Delete product
   const handleDelete = async (id) => {
     const ok = window.confirm("Delete this product?");
     if (!ok) return;
@@ -210,7 +177,7 @@ function App() {
         <div className="stats">
           <div className="stats-left">
             <div className="chip">Total: {products.length}</div>
-            <div className="search" >
+            <div className="search">
               <input
                 type="text"
                 aria-label="Search products"
@@ -228,7 +195,7 @@ function App() {
             <div className="form-card-header">
               <h2>{editId ? "Edit Product" : "Add Product"}</h2>
             </div>
-              <form onSubmit={handleSubmit} className="product-form">
+            <form onSubmit={handleSubmit} className="product-form">
               <input
                 type="number"
                 name="id"
@@ -293,8 +260,6 @@ function App() {
             {message && <div className="success-msg">{message}</div>}
             {error && <div className="error-msg">{error}</div>}
           </div>
-          
-          
 
           <div className="card list-card">
             <h2>Products</h2>
@@ -305,28 +270,28 @@ function App() {
                 <table className="product-table">
                   <thead>
                     <tr>
-                      <th 
-                        className={`sortable ${sortField === 'id' ? `sort-${sortDirection}` : ''}`}
-                        onClick={() => handleSort('id')}
+                      <th
+                        className={`sortable ${sortField === "id" ? `sort-${sortDirection}` : ""}`}
+                        onClick={() => handleSort("id")}
                       >
                         ID
                       </th>
-                      <th 
-                        className={`sortable ${sortField === 'name' ? `sort-${sortDirection}` : ''}`}
-                        onClick={() => handleSort('name')}
+                      <th
+                        className={`sortable ${sortField === "name" ? `sort-${sortDirection}` : ""}`}
+                        onClick={() => handleSort("name")}
                       >
                         Name
                       </th>
                       <th>Description</th>
-                      <th 
-                        className={`sortable ${sortField === 'price' ? `sort-${sortDirection}` : ''}`}
-                        onClick={() => handleSort('price')}
+                      <th
+                        className={`sortable ${sortField === "price" ? `sort-${sortDirection}` : ""}`}
+                        onClick={() => handleSort("price")}
                       >
                         Price
                       </th>
-                      <th 
-                        className={`sortable ${sortField === 'quantity' ? `sort-${sortDirection}` : ''}`}
-                        onClick={() => handleSort('quantity')}
+                      <th
+                        className={`sortable ${sortField === "quantity" ? `sort-${sortDirection}` : ""}`}
+                        onClick={() => handleSort("quantity")}
                       >
                         Quantity
                       </th>

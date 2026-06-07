@@ -15,6 +15,9 @@ env/
 # Environment files
 .env
 .env.*
+# .gitignore
+frontend/.env.local
+frontend/.env.production
 
 # Distribution / packaging
 build/
