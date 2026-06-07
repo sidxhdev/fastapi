@@ -31,7 +31,7 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh '''
-                        echo "REACT_APP_API_URL=https://inventory-manager.sidxh.com" > .env.production
+                        echo "REACT_APP_API_URL=https://api.inventory-manager.sidxh.com" > .env.production
                         npm install
                         npm run build
                     '''

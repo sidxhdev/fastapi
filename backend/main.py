@@ -25,7 +25,6 @@ app.add_middleware(
     
 allow_origins=[
     "http://localhost:3000",
-    "http://fastapi-inventory-frontend.s3-website.ap-south-1.amazonaws.com",
     "https://inventory-manager.sidxh.com",
     
 ],
