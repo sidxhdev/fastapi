@@ -18,7 +18,7 @@ pipeline {
 
         stage('Build Backend') {
             steps {
-                sh 'docker build -t fastapi-backend .'
+                sh 'docker build -t fastapi-backend -f backend/Dockerfile .'
             }
         }
 
