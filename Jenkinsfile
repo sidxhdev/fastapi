@@ -18,25 +18,25 @@ pipeline {
             }
         }
         stage('Run Backend') {
-            steps {
-                withCredentials([
-                    string(credentialsId: 'DATABASE_URL', variable: 'DATABASE_URL')
-                ]) {
-                    sh '''
-                        docker stop fastapi-backend || true
-                        docker rm fastapi-backend || true
-                        docker run -d \
-                            --name fastapi-backend \
-                            -e DATABASE_URL=$DATABASE_URL \
-                            -e REDIS_HOST=redis \
-                            -e REDIS_PORT=6379 \
-                            -e ENVIRONMENT=production \
-                            -p 8000:8000 \
-                            fastapi-backend
-                    '''
-                }
-            }
+    steps {
+        withCredentials([
+            string(credentialsId: 'DATABASE_URL', variable: 'DATABASE_URL')
+        ]) {
+            sh '''
+                docker stop fastapi-backend || true
+                docker rm fastapi-backend || true
+                docker run -d \
+                    --name fastapi-backend \
+                    --network host \
+                    -e DATABASE_URL=$DATABASE_URL \
+                    -e REDIS_HOST=localhost \
+                    -e REDIS_PORT=6379 \
+                    -e ENVIRONMENT=production \
+                    fastapi-backend
+            '''
         }
+    }
+}
         stage('Build Frontend') {
             steps {
                 sh '''
